@@ -118,6 +118,20 @@ services:
       - ./log:/var/opt/mssql/log
       - ./secrets:/var/opt/mssql/secrets
 
+  init-db:
+    image: mcr.microsoft.com/mssql-tools
+    depends_on:
+      # Ensures init-db starts after MSSQL is ready
+      - mssql
+    environment:
+      MSSQL_SA_PASSWORD: ${SQL_SA_PASSWORD}
+    volumes:
+      # Mounts SQL scripts for database initialization
+      - ./sql/gate-master.sql:/var/opt/mssql/scripts/gate-master.sql
+      - ./sql/init-data.sql:/var/opt/mssql/scripts/init-data.sql
+    # Executes SQL scripts after a delay to ensure MSSQL is ready
+    entrypoint: /bin/bash -c "sleep 60s && /opt/mssql-tools/bin/sqlcmd -S mssql-db -U SA -P ${SQL_SA_PASSWORD} -d master -i /var/opt/mssql/scripts/gate-master.sql && /opt/mssql-tools/bin/sqlcmd -S mssql-db -U SA -P ${SQL_SA_PASSWORD} -d master -i /var/opt/mssql/scripts/init-data.sql"
+
 volumes:
   postgres_data:
     driver: local
