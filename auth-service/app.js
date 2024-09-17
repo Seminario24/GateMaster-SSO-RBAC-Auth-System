@@ -2,16 +2,28 @@ import express from "express";
 import axios from "axios";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import cors from "cors";  
+
 dotenv.config();
 const app = express();
 
+// Configurar CORS
+app.use(cors({
+  origin: 'http://localhost:5173', 
+  methods: 'GET,POST,PUT,PATCH,DELETE',
+  credentials: true  
+}));
+
+// Middleware para manejo de errores
 const errorHandlingMiddleware = (err, req, res, next) => {
   console.error(err);
   res.status(err.status || 500).send(err.message || "Internal server error");
 };
 
-app.use(errorHandlingMiddleware);
 app.use(express.json());
+app.use(errorHandlingMiddleware);
+
+// Rutas
 
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
