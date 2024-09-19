@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import redis from "ioredis";
+import axios from "axios";
 dotenv.config();
 
 const redisClient = redis.createClient({
@@ -61,39 +62,27 @@ app.get("/apps", authorizationMiddleware("admin"), (req, res) => {
 });
 
 
+//CREACION DE USUARIOS
 app.post("/createuser", async (req, res) => {
-  const {id, username, email, firstName, lastName, password } = req.body;
+  const {username, email, firstName, lastName } = req.body;
 
   const authHeader = req.headers["authorization"];
   if (!authHeader) return res.status(401).send("Missing authorization header");
   const token = authHeader.split(" ")[1];
   try {
-    const { data } = await axios({
+      await axios({
       method: "post",
-      url: `${process.env.KEYCLOAK_AUTH_SERVER_URL}/admin/realms/${process.env.KEYCLOAK_REALM}/users`,
+      url: `http://keycloak:8080/admin/realms/master/users`,
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`,
       },
       data: {
-        id,
         username,
         email,
         firstName,
         lastName,
         enabled: true,
-        credentials: [
-          {
-            type: 'password',
-            secretData: JSON.stringify({
-              value: password, 
-            }),
-            credentialData: JSON.stringify({
-              algorithm: 'bcrypt',
-              hashIterations: 10,
-            }),
-          },
-        ],
       },
     });
     res.status(201).send("Usuario creado exitosamente");
@@ -104,19 +93,18 @@ app.post("/createuser", async (req, res) => {
   }
 });
 
-
+//CONSEGUIR USUARIO
 app.post("/getuser", async (req, res) => {
   const { username } = req.body;
 
   const authHeader = req.headers["authorization"];
   if (!authHeader) return res.status(401).send("Missing authorization header");
-
   const token = authHeader.split(" ")[1];
 
   try {
     const { data } = await axios({
       method: "get",
-      url: `${process.env.KEYCLOAK_AUTH_SERVER_URL}/admin/realms/${process.env.KEYCLOAK_REALM}/users?username=${username}`,
+      url: `http://keycloak:8080/admin/realms/master/users?username=${username}`,
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`,
@@ -124,17 +112,18 @@ app.post("/getuser", async (req, res) => {
     });
 
     if (data.length > 0) {
-      res.status(200).json(data[0]);  // Devolviendo el primer resultado
+      res.status(200).json(data[0]); 
     } else {
       res.status(404).send("Usuario no encontrado");
     }
 
   } catch (err) {
-    console.error("Error details: " + err.response?.data + err.message);
+    console.error("Error details:", err.response ? err.response.data : err.message, err.message);
     res.status(500).send("Ocurrió un error al buscar el usuario");
   }
 });
 
+//SETEAR CONTRASEÑA
 app.post("/setuserpassword", async (req, res) => {
   const { id, password } = req.body;
 
@@ -146,7 +135,7 @@ app.post("/setuserpassword", async (req, res) => {
   try {
     const { status } = await axios({
       method: "put",
-      url: `${process.env.KEYCLOAK_AUTH_SERVER_URL}/admin/realms/${process.env.KEYCLOAK_REALM}/users/${id}/reset-password`,
+      url: `http://keycloak:8080/admin/realms/master/users/${id}/reset-password`,
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`,
@@ -170,7 +159,116 @@ app.post("/setuserpassword", async (req, res) => {
   }
 });
 
+//CONSIGUE TODOS LOS USUARIOS
+app.get("/getallusers", async (req, res) => {
+
+  const authHeader = req.headers["authorization"];
+  if (!authHeader) return res.status(401).send("Missing authorization header");
+
+  const token = authHeader.split(" ")[1]; 
+
+  try {
+    
+    const { data } = await axios({
+      method: "get",
+      url: `http://keycloak:8080/admin/realms/master/users`,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+    });
+
+    if (data.length > 0) {
+      res.status(200).json(data); 
+    } else {
+      res.status(404).send("No se encontraron usuarios");
+    }
+
+  } catch (err) {
+    console.error("Detalles del error:", err.response ? err.response.data : err.message, err.message);
+    res.status(500).send("Ocurrió un error al obtener los usuarios");
+  }
+});
+
+//MODIFICAR UN USUARIO
+
+app.put("/updateuser", async (req, res) => {
+  const {userId, email, firstName, lastName } = req.body;
+
+  const authHeader = req.headers["authorization"];
+  if (!authHeader) return res.status(401).send("Missing authorization header");
+  const token = authHeader.split(" ")[1];
+
+  try {
+    
+    await axios({
+      method: "put",
+      url: `http://keycloak:8080/admin/realms/master/users/${userId}`,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      data: {
+        email,
+        firstName,
+        lastName,
+        enabled: true,
+      },
+    });
+
+    res.status(200).send("Usuario actualizado exitosamente");
+  } catch (err) {
+    console.error("Error details:", err.response ? err.response.data : err.message);
+    res.status(500).send("Ocurrió un error al actualizar el usuario");
+  }
+});
+
+
+
+app.put("/disableuser", async (req, res) => {
+  const { username } = req.body; 
+  const authHeader = req.headers["authorization"];
+  if (!authHeader) return res.status(401).send("Missing authorization header");
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const { data } = await axios({
+      method: "get",
+      url: `http://keycloak:8080/admin/realms/master/users?username=${username}`,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+    });
+
+    if (data.length === 0) {
+      return res.status(404).send("Usuario no encontrado");
+    }
+
+    const userId = data[0].id; 
+
+    await axios({
+      method: "put",
+      url: `http://keycloak:8080/admin/realms/master/users/${userId}`,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      data: {
+        ...data[0], 
+        enabled: false, 
+      },
+    });
+
+    res.status(200).send("Usuario deshabilitado exitosamente");
+  } catch (err) {
+    console.error("Error details:", err.response ? err.response.data : err.message);
+    res.status(500).send("Ocurrió un error al deshabilitar al usuario");
+  }
+});
+
 const port = process.env.PORT || 3002;
+
 app.listen(port, () => {
   console.log(`gatemaster listening on port ${port}`);
 });
