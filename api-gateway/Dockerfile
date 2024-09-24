@@ -18,4 +18,3 @@ EXPOSE 3002
 
 # Define el comando para ejecutar la aplicación
 CMD ["node", "app.js"]
-
