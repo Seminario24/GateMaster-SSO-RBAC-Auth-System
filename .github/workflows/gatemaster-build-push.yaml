@@ -1,4 +1,4 @@
-name: gatemaster-push
+name: gatemaster-build-push
 on:
   push:
     paths:
