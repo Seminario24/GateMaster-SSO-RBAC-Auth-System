@@ -3,12 +3,15 @@ on:
   push:
     paths:
     - 'crm/**'
+
     branches:
       - main 
   workflow_dispatch: 
+
 permissions:
   id-token: write
-  contents: read  
+  contents: read 
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -21,6 +24,7 @@ jobs:
           password: ${{secrets.DOCKERHUB_PASSWORD}}
         run: |
             docker login -u $username -p $password 
+            
       - name: Docker Build and Publish
         uses: docker/build-push-action@v2
         with:
