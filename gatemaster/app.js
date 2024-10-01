@@ -2,7 +2,17 @@ import express from "express";
 import dotenv from "dotenv";
 import redis from "ioredis";
 import axios from "axios";
+import cors from "cors";  
+
 dotenv.config();
+const app = express();
+
+// Configurar CORS
+app.use(cors({
+  origin: 'http://localhost:5173', 
+  methods: 'GET,POST,PUT,PATCH,DELETE',
+  credentials: true  
+}));
 
 const redisClient = redis.createClient({
   host: process.env.REDIS_HOST || "127.0.0.1",
@@ -17,7 +27,7 @@ redisClient.on("end", () => {
   console.log("Redis client connection closed");
 });
 
-const app = express();
+
 const errorHandlingMiddleware = (err, req, res, next) => {
   console.error(err);
   res.status(err.status || 500).send(err.message || "Internal server error");

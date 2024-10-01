@@ -3,7 +3,17 @@ import rateLimit from "express-rate-limit";
 import axios from "axios";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import Redis from "ioredis";
+import cors from "cors";  
 
+
+const app = express();
+
+// Configurar CORS
+app.use(cors({
+  origin: 'http://localhost:5173', 
+  methods: 'GET,POST,PUT,PATCH,DELETE',
+  credentials: true  
+}));
 // Create a Redis client
 const redisClient = new Redis({
   host: process.env.REDIS_HOST || "127.0.0.1",
@@ -19,7 +29,7 @@ redisClient.on("end", () => {
   console.log("Redis client connection closed");
 });
 
-const app = express();
+
 const apiLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 100, // limit each IP to 100 requests per windowMs
