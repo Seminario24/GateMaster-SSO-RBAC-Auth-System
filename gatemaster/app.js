@@ -277,6 +277,88 @@ app.put("/disableuser", async (req, res) => {
   }
 });
 
+
+app.put("/enableuser", async (req, res) => {
+  const { username } = req.body; 
+  const authHeader = req.headers["authorization"];
+  if (!authHeader) return res.status(401).send("Missing authorization header");
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const { data } = await axios({
+      method: "get",
+      url: `http://keycloak:8080/admin/realms/master/users?username=${username}`,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+    });
+
+    if (data.length === 0) {
+      return res.status(404).send("Usuario no encontrado");
+    }
+
+    const userId = data[0].id; 
+
+    await axios({
+      method: "put",
+      url: `http://keycloak:8080/admin/realms/master/users/${userId}`,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      data: {
+        ...data[0], 
+        enabled: true,  // Cambiar a habilitado
+      },
+    });
+
+    res.status(200).send("Usuario habilitado exitosamente");
+  } catch (err) {
+    console.error("Error details:", err.response ? err.response.data : err.message);
+    res.status(500).send("Ocurrió un error al habilitar al usuario");
+  }
+});
+
+
+
+// Obtener el estado del usuario por username
+app.get("/getallusersstatus", async (req, res) => {
+  const authHeader = req.headers["authorization"];
+  if (!authHeader) return res.status(401).send("Missing authorization header");
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    // Obtener la lista de usuarios desde Keycloak
+    const { data } = await axios({
+      method: "get",
+      url: `http://keycloak:8080/admin/realms/master/users`,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+    });
+
+    // Mapear la respuesta para incluir solo el username, email y estado
+    const usersStatus = data.map(user => ({
+      username: user.username,
+      email: user.email,
+      status: user.enabled ? "active" : "suspended" // Determina si el usuario está activo o suspendido
+    }));
+
+    if (usersStatus.length > 0) {
+      res.status(200).json(usersStatus);
+    } else {
+      res.status(404).send("No se encontraron usuarios");
+    }
+
+  } catch (err) {
+    console.error("Detalles del error:", err.response ? err.response.data : err.message);
+    res.status(500).send("Ocurrió un error al obtener los usuarios");
+  }
+});
+
 const port = process.env.PORT || 3002;
 
 app.listen(port, () => {
