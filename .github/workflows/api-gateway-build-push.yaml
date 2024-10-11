@@ -29,6 +29,6 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: ./api-gateway
-          file: .
+          file: ./Dockerfile
           push: true
           tags: umg100/api-gateway:${{github.run_number}}
