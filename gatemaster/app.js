@@ -101,25 +101,7 @@ app.post("/createuser", async (req, res) => {
         enabled: true,
       },
     });
-
     res.status(201).send("Usuario creado exitosamente");
-
-    //ELIMINAR ESTA PARTE
-    console.log('entramos a la parte de la base de datos');
-    const client = await pool.connect(); // Se obtiene el cliente de la conexión
-    try {
-      console.log('consultamos la base de datos');
-      await client.query('SELECT 1');
-      console.log('Conexión a la base de datos exitosa');
-      res.status(201).send("Usuario creado exitosamente y conexión a la base de datos verificada");
-    }  catch (dbError) {
-      console.error("Database error: ", dbError.message);
-      res.status(500).send("Error al conectarse o insertar en la base de datos");
-    }
-     finally {
-      client.release(); // Libera el cliente después de la consulta
-    }
-    //HASTA AQUI
 
   } catch (err) {
     console.error("Error details: "+ err.response + err.message);
