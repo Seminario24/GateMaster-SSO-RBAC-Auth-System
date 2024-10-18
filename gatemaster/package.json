@@ -23,6 +23,7 @@
     "keycloak-connect": "keycloak/keycloak-nodejs-connect",
     "nodemon": "^2.0.22",
     "passport": "^0.6.0",
+    "pg": "^8.13.0",
     "uuid": "^9.0.0"
   },
   "devDependencies": {
