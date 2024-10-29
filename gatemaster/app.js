@@ -2,11 +2,19 @@ import express from "express";
 import dotenv from "dotenv";
 import redis from "ioredis";
 import axios from "axios";
+
 import pkg from 'pg';
 const { Pool } = pkg;
 
-
 dotenv.config();
+const app = express();
+
+// Configurar CORS
+app.use(cors({
+  origin: 'http://localhost:5173', 
+  methods: 'GET,POST,PUT,PATCH,DELETE',
+  credentials: true  
+}));
 
 const pool = new Pool({
   user: "keycloak_db_user",
@@ -29,7 +37,7 @@ redisClient.on("end", () => {
   console.log("Redis client connection closed");
 });
 
-const app = express();
+
 const errorHandlingMiddleware = (err, req, res, next) => {
   console.error(err);
   res.status(err.status || 500).send(err.message || "Internal server error");
@@ -325,6 +333,7 @@ app.put("/enableuser", async (req, res) => {
 });
 
 // OBTENER ESTADO DE USUARIO
+
 app.get("/getallusersstatus", async (req, res) => {
   const authHeader = req.headers["authorization"];
   if (!authHeader) return res.status(401).send("Missing authorization header");
@@ -332,6 +341,7 @@ app.get("/getallusersstatus", async (req, res) => {
   const token = authHeader.split(" ")[1];
 
   try {
+
     const { data } = await axios({
       method: "get",
       url: `http://keycloak:8080/admin/realms/master/users`,
@@ -345,6 +355,7 @@ app.get("/getallusersstatus", async (req, res) => {
       username: user.username,
       email: user.email,
       status: user.enabled ? "active" : "suspended"
+
     }));
 
     if (usersStatus.length > 0) {
@@ -2341,8 +2352,6 @@ app.get("/getuserpermissions", async (req, res) => {
     client.release();
   }
 });
-
-
 
 
 const port = process.env.PORT || 3002;

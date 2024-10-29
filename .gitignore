@@ -1,0 +1,5 @@
+api-gateway/node_modules
+.env
+crm/node_modules
+gatemaster/node_modules
+
