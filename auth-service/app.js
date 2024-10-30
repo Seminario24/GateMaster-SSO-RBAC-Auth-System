@@ -8,12 +8,13 @@ dotenv.config();
 const app = express();
 app.set('trust proxy', 1);
 
+app.use(cors());
 // Configurar CORS
-app.use(cors({
-  origin: 'http://localhost:5173', 
-  methods: 'GET,POST,PUT,PATCH,DELETE',
-  credentials: true  
-}));
+// app.use(cors({
+//   origin: 'http://localhost:5173', 
+//   methods: 'GET,POST,PUT,PATCH,DELETE',
+//   credentials: true  
+// }));
 
 // Middleware para manejo de errores
 const errorHandlingMiddleware = (err, req, res, next) => {
@@ -21,7 +22,10 @@ const errorHandlingMiddleware = (err, req, res, next) => {
   res.status(err.status || 500).send(err.message || "Internal server error");
 };
 
+console.log("Antes del express json");
 app.use(express.json());
+
+console.log("Antes del express errorHandlingMiddleware");
 app.use(errorHandlingMiddleware);
 
 // Rutas
@@ -29,6 +33,7 @@ app.use(errorHandlingMiddleware);
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
   try {
+    console.log("Iniciando login endpoint");
     const { data } = await axios({
       method: "post",
       url: `${process.env.KEYCLOAK_AUTH_SERVER_URL}/realms/${process.env.KEYCLOAK_REALM}/protocol/openid-connect/token`,
@@ -72,6 +77,7 @@ app.post("/refreshToken", async (req, res) => {
 
 app.get("/verifyToken", async (req, res) => {
   try {
+    console.log("Iniciando Verify token")
     const accessToken = req.headers.authorization.split(" ")[1];
     const { data } = await axios({
       method: "post",
