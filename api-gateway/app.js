@@ -10,11 +10,13 @@ const app = express();
 app.set('trust proxy', 1);
 
 // Configurar CORS
-app.use(cors({
-  origin: 'http://localhost:5173', 
-  methods: 'GET,POST,PUT,PATCH,DELETE',
-  credentials: true  
-}));
+// app.use(cors({
+//   origin: 'http://localhost:5173', 
+//   methods: 'GET,POST,PUT,PATCH,DELETE',
+//   credentials: true  
+// }));
+console.log("Antes de implemnetar los cors");
+app.use(cors());
 // Create a Redis client
 const redisClient = new Redis({
   host: process.env.REDIS_HOST || "127.0.0.1",
@@ -41,8 +43,10 @@ app.use(apiLimiter);
 const authUrl = process.env.AUTH_URL || "http://localhost:3001";
 
 const authMiddleware = async (req, res, next) => {
+  console.log("Llamando al authMiddleware");
   const authHeader = req.headers["authorization"];
   if (!authHeader) return res.status(401).send("Missing authorization header");
+  console.log("Antes de hacer el split de auth header");
   const token = authHeader.split(" ")[1];
   let cachedData = await redisClient.get(token);
   if (cachedData) {
