@@ -2,7 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import redis from "ioredis";
 import axios from "axios";
-
+import cors from "cors";
 import pkg from 'pg';
 const { Pool } = pkg;
 
