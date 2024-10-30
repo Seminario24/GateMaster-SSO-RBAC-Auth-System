@@ -49,7 +49,7 @@ const authMiddleware = async (req, res, next) => {
     return next();
   }
   try {
-    const response = await axios.get(`${authUrl}/v`, {
+    const response = await axios.get(`${authUrl}/verifyToken`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     const { data } = response;
