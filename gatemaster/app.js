@@ -11,18 +11,14 @@ const app = express();
 app.set('trust proxy', 1);
 
 // Configurar CORS
-app.use(cors({
-  origin: 'http://localhost:5173', 
-  methods: 'GET,POST,PUT,PATCH,DELETE',
-  credentials: true  
-}));
+app.use(cors());
 
 const pool = new Pool({
-  user: "keycloak_db_user",
-  host: "postgres",
-  database: "keycloak_db",
-  password: "keycloak_db_user_password",
-  port: 5432,
+  user: process.env.POSTGRES_USER || "keycloak_db_user",
+  host: process.env.POSTGRES_HOST || "postgres",
+  database: process.env.POSTGRES_DB || "keycloak_db",
+  password: process.env.POSTGRES_PASSWORD || "keycloak_db_user_password",
+  port: process.env.POSTGRES_PORT || 5432,
 });
 
 const redisClient = redis.createClient({
@@ -97,7 +93,7 @@ app.post("/createuser", async (req, res) => {
   try {
       await axios({
       method: "post",
-      url: `http://keycloak:8080/admin/realms/master/users`,
+      url: `${process.env.KEYCLOAK_AUTH_SERVER_URL}/admin/realms/master/users`,
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`,
@@ -129,7 +125,7 @@ app.post("/getuser", async (req, res) => {
   try {
     const { data } = await axios({
       method: "get",
-      url: `http://keycloak:8080/admin/realms/master/users?username=${username}`,
+      url: `${process.env.KEYCLOAK_AUTH_SERVER_URL}/admin/realms/master/users?username=${username}`,
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`,
@@ -160,7 +156,7 @@ app.post("/setuserpassword", async (req, res) => {
   try {
     const { status } = await axios({
       method: "put",
-      url: `http://keycloak:8080/admin/realms/master/users/${id}/reset-password`,
+      url: `${process.env.KEYCLOAK_AUTH_SERVER_URL}/admin/realms/master/users/${id}/reset-password`,
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`,
@@ -196,7 +192,7 @@ app.get("/getallusers", async (req, res) => {
     
     const { data } = await axios({
       method: "get",
-      url: `http://keycloak:8080/admin/realms/master/users`,
+      url: `${process.env.KEYCLOAK_AUTH_SERVER_URL}/admin/realms/master/users`,
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`,
@@ -227,7 +223,7 @@ app.put("/updateuser", async (req, res) => {
     
     await axios({
       method: "put",
-      url: `http://keycloak:8080/admin/realms/master/users/${userId}`,
+      url: `${process.env.KEYCLOAK_AUTH_SERVER_URL}/admin/realms/master/users/${userId}`,
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`,
@@ -257,7 +253,7 @@ app.put("/disableuser", async (req, res) => {
   try {
     const { data } = await axios({
       method: "get",
-      url: `http://keycloak:8080/admin/realms/master/users?username=${username}`,
+      url: `${process.env.KEYCLOAK_AUTH_SERVER_URL}/admin/realms/master/users?username=${username}`,
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`,
@@ -272,7 +268,7 @@ app.put("/disableuser", async (req, res) => {
 
     await axios({
       method: "put",
-      url: `http://keycloak:8080/admin/realms/master/users/${userId}`,
+      url: `${process.env.KEYCLOAK_AUTH_SERVER_URL}/admin/realms/master/users/${userId}`,
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`,
@@ -300,7 +296,7 @@ app.put("/enableuser", async (req, res) => {
   try {
     const { data } = await axios({
       method: "get",
-      url: `http://keycloak:8080/admin/realms/master/users?username=${username}`,
+      url: `${process.env.KEYCLOAK_AUTH_SERVER_URL}/admin/realms/master/users?username=${username}`,
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`,
@@ -315,7 +311,7 @@ app.put("/enableuser", async (req, res) => {
 
     await axios({
       method: "put",
-      url: `http://keycloak:8080/admin/realms/master/users/${userId}`,
+      url: `${process.env.KEYCLOAK_AUTH_SERVER_URL}/admin/realms/master/users/${userId}`,
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`,
@@ -345,7 +341,7 @@ app.get("/getallusersstatus", async (req, res) => {
 
     const { data } = await axios({
       method: "get",
-      url: `http://keycloak:8080/admin/realms/master/users`,
+      url: `${process.env.KEYCLOAK_AUTH_SERVER_URL}/admin/realms/master/users`,
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`,
